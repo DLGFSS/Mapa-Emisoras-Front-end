@@ -91,6 +91,7 @@ onMounted(() => {
 <style scoped>
 
 .contenido {
+  z-index: 1000;
   top: 0px;
   width: 25%;
   height: 100%;
