@@ -1,15 +1,19 @@
 <template>
+  
+  <MapComponent />
   <FormComponent/>
 </template>
 
 <script>
-import FormComponent from './components/FormComponent.vue';
-
+import MapComponent from './components/MapComponent.vue'
+import FormComponent from './components/FormComponent.vue'
 
 export default {
   name: 'App',
   components: {
-    FormComponent
+    MapComponent
+  ,FormComponent
+
   }
 }
 </script>
