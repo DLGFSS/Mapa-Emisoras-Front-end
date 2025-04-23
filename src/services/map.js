@@ -152,3 +152,19 @@ export function setStatesData(data) {
 export function getStatesData() {
     return statesData;
 }
+
+export function limpiarCapaMapa(map) {
+  const capaActual = getGeoJson();
+  if (capaActual) {
+    map.removeLayer(capaActual);
+    setGeoJson(null);
+  }
+}
+let marker;
+function moveMap(lat, lon, name) {
+  if (marker) {
+    map.removeLayer(marker);
+  }
+  marker = L.marker([lat, lon]).addTo(map).bindPopup(name).openPopup();
+  map.setView([lat, lon], 12); // Zoom más cercano al municipio
+}

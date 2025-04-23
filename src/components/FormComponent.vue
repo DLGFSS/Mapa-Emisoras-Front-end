@@ -14,8 +14,9 @@
        
         <div class="d-flex align-items-center gap-2">
           <label for="states">States:</label>
-          <select v-model="estadoSeleccionado" @change="onEstadoSeleccionado" class="form-select">
-            <option value="" disabled>Select a state</option>
+          <select v-model="estadoSeleccionado" @change="selectStates" class="form-select" :disabled="seleccionarTodos">
+           
+            <option value="" >Select a state</option>
             <option v-for="(estado, i) in estados" :key="estado.codigo" :value="estado.codigo">
               {{ String(i + 1).padStart(2, '0') }} - {{ estado.nombre }}
             </option>
@@ -24,7 +25,7 @@
         <br />
 
         <div class="d-flex align-items-center gap-2">
-          <input type="checkbox" id="all" v-model="seleccionarTodos" @change="toggleMunicipios" />
+          <input type="checkbox" id="all" v-model="seleccionarTodos" @change="checkboxAction" />
           <label for="all"> All municipalities</label>
         </div>
         <br />
@@ -55,10 +56,10 @@
 
        
         <div class="d-flex align-items-center gap-2">
-          <label for="customRange1" class="form-label">Year:</label>
-          <input type="range" class="form-range" v-model="customRange1" min="2004" max="2022" />
+          <label for="year" class="form-label">Year:</label>
+          <input type="range" class="form-range" v-model="year" min="2004" max="2022" />
         </div>
-        <span>Selected Year: {{ customRange1 }}</span>
+        <span>Selected Year: {{ year }}</span>
         <br />
 
        
@@ -91,8 +92,8 @@
 
 <script>
 import { getSustancias, getMunicipios, getEstados } from '@/services/api';
-import { geoJsonM} from '@/services/geojson'
-import { createMap } from '@/services/map';
+import { geoJsonM, geojsonMexicoAll,geojsonMexico} from '@/services/geojson'
+import { createMap , limpiarCapaMapa } from '@/services/map';
 import { release_ent_mex ,release_all_mun,release_ent} from '@/services/mapaCalor'
 
 export default {
@@ -105,7 +106,7 @@ export default {
       municipioSeleccionado: '',
       sustanciaSeleccionada: '',
       seleccionarTodos: false,
-      customRange1: 2022,
+      year: 2013,
       radius: 5,
       mostrarPoblacion: false,
     };
@@ -114,16 +115,20 @@ export default {
     const map = createMap();
     this.map = map; 
 
-
+    
     this.estados = await getEstados();
     this.sustancias = await getSustancias();
   },
   methods: {
 
-    async onEstadoSeleccionado() {
+    async selectStates() {
     if (this.estadoSeleccionado && this.estadoSeleccionado !== "none") {
-      await this.cargarMunicipios();         
+      await this.cargarMunicipios();    
+      limpiarCapaMapa(this.map);     
       geoJsonM(this.estadoSeleccionado,this.map);    
+    }else{
+      limpiarCapaMapa(this.map);
+      geojsonMexico(this.map);
     }
   },
 
@@ -131,9 +136,14 @@ export default {
       this.municipios = await getMunicipios(this.estadoSeleccionado);
     },
 
-    toggleMunicipios() {
+    checkboxAction() {
       if (this.seleccionarTodos) {
+        this.estadoSeleccionado = '';
         this.municipioSeleccionado = '';
+        geojsonMexicoAll(this.map);
+      }else {
+        limpiarCapaMapa(this.map);
+        geojsonMexico(this.map);
       }
     },
     ejecutarAccion() {
@@ -141,19 +151,24 @@ export default {
       console.log("estado "+this.estadoSeleccionado);
       console.log("municipio "+this.municipioSeleccionado);
       console.log("sustancia "+this.sustanciaSeleccionada);
-      console.log("Año "+this.customRange1);
+      console.log("Año "+this.yaer);
       console.log("Rango "+this.radius);
       try {
+
+
+
       if (this.seleccionarTodos) {
-         release_all_mun(this.map, this.estadoSeleccionado, this.sustanciaSeleccionada, this.customRange1);
+        console.log("check");
+
+         release_all_mun(this.map, this.sustanciaSeleccionada, this.year);
         
       } else {
         if (!this.estadoSeleccionado) {
-           release_ent_mex(this.map, this.sustanciaSeleccionada, this.customRange1);
+           release_ent_mex(this.map, this.sustanciaSeleccionada, this.year);
            
         } else if (!this.municipioSeleccionado) {
           console.log("release ent");
-           release_ent(this.map, this.estadoSeleccionado, this.sustanciaSeleccionada, this.customRange1);
+           release_ent(this.map, this.estadoSeleccionado, this.sustanciaSeleccionada, this.year);
            
         } else {
           console.log("mostrar puntos de las emisoras para municipio");
@@ -169,10 +184,12 @@ export default {
       this.municipioSeleccionado = '';
       this.sustanciaSeleccionada = '';
       this.seleccionarTodos = false;
-      this.customRange1 = 2022;
+      this.year = 2022;
       this.radius = 5;
       this.mostrarPoblacion = false;
       this.municipios = [];
+      limpiarCapaMapa(this.map);
+      geojsonMexico(this.map);
     },
   },
 };
